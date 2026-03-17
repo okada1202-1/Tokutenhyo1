@@ -3,126 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人数移動シミュレーター</title>
+    <title>中当て人数管理ボード</title>
     <style>
-        /* CSS: 見た目の調整 */
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f0f2f5;
-            margin: 0;
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { text-align: center; color: #333; font-size: 1.5rem; margin-bottom: 20px; }
+        
+        .score-board { display: flex; justify-content: space-around; margin-bottom: 20px; background: #333; color: white; padding: 15px; border-radius: 10px; }
+        .score-item { text-align: center; }
+        .score-num { font-size: 2rem; font-weight: bold; display: block; }
+        .score-label { font-size: 0.8rem; opacity: 0.8; }
+
+        .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .player { 
+            aspect-ratio: 1; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
         }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 320px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 25px;
-        }
-        .label {
-            font-size: 0.9rem;
-            color: #666;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .count {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #333;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: background 0.2s, transform 0.1s;
-            width: 100%;
-        }
-        button:hover { background-color: #0056b3; }
-        button:active { transform: scale(0.98); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .log {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #d9534f;
-            min-height: 1.2rem;
-        }
+        /* 中の人（生存） */
+        .player.inside { background: #007bff; color: white; box-shadow: 0 4px 0 #0056b3; }
+        .player.inside:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 外の人（アウト） */
+        .player.outside { background: #e9ecef; color: #adb5bd; text-decoration: line-through; box-shadow: none; }
+
+        .controls { border-top: 2px solid #eee; pt: 15px; display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; }
+        .btn-reset { flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .instruction { font-size: 0.85rem; color: #666; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="margin-top: 0;">人数移動ゲーム</h2>
-    <div class="stats">
-        <div>
-            <span class="label">外（攻撃側）</span>
-            <span id="outerCount" class="count">9</span>
+    <h1>中当て人数管理</h1>
+
+    <div class="score-board">
+        <div class="score-item">
+            <span class="score-label">中（残り）</span>
+            <span id="inCount" class="score-num">17</span>
         </div>
-        <div>
-            <span class="label">中（守備側）</span>
-            <span id="innerCount" class="count">17</span>
+        <div class="score-item">
+            <span class="score-label">外（合計）</span>
+            <span id="outCount" class="score-num">9</span>
         </div>
     </div>
-    
-    <button id="hitBtn">外が中を当てた！</button>
-    
-    <div id="message" class="log"></div>
-    <button id="resetBtn" style="margin-top: 10px; background-color: #6c757d; font-size: 0.8rem; padding: 5px;">リセット</button>
+
+    <div id="memberGrid" class="member-grid">
+        <!-- JSでボタンを生成 -->
+    </div>
+
+    <div class="instruction">
+        青い番号をタップすると「外」へ移動します。<br>
+        間違えたらグレーの番号をもう一度押すと「中」に戻ります。
+    </div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="resetGame()">全員リセット</button>
+    </div>
 </div>
 
 <script>
-    /* JavaScript: ロジックの実装 */
-    let outer = 9;
-    let inner = 17;
+    const INITIAL_OUT = 9;
+    const INITIAL_IN = 17;
+    
+    // 中にいる人の状態管理（17人分、trueなら中にいる）
+    let inPlayers = Array(INITIAL_IN).fill(true);
 
-    const outerElem = document.getElementById('outerCount');
-    const innerElem = document.getElementById('innerCount');
-    const hitBtn = document.getElementById('hitBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const message = document.getElementById('message');
+    function render() {
+        const grid = document.getElementById('memberGrid');
+        grid.innerHTML = '';
+        
+        inPlayers.forEach((isInside, index) => {
+            const btn = document.createElement('button');
+            btn.className = `player ${isInside ? 'inside' : 'outside'}`;
+            btn.textContent = index + 1;
+            btn.onclick = () => togglePlayer(index);
+            grid.appendChild(btn);
+        });
 
-    // 「当てた」ボタンの処理
-    hitBtn.addEventListener('click', () => {
-        if (inner > 0) {
-            inner--; // 中が減る
-            outer++; // 外が増える
-            updateDisplay();
-            
-            if (inner === 0) {
-                hitBtn.disabled = true;
-                message.textContent = "中が全滅しました！";
-            }
-        }
-    });
-
-    // 「リセット」ボタンの処理
-    resetBtn.addEventListener('click', () => {
-        outer = 9;
-        inner = 17;
-        hitBtn.disabled = false;
-        message.textContent = "";
-        updateDisplay();
-    });
-
-    // 画面表示の更新
-    function updateDisplay() {
-        outerElem.textContent = outer;
-        innerElem.textContent = inner;
+        // 人数集計
+        const currentIn = inPlayers.filter(p => p).length;
+        document.getElementById('inCount').textContent = currentIn;
+        document.getElementById('outCount').textContent = INITIAL_OUT + (INITIAL_IN - currentIn);
     }
+
+    // 救済策：クリックするたびに中と外を切り替える
+    function togglePlayer(index) {
+        inPlayers[index] = !inPlayers[index];
+        render();
+    }
+
+    function resetGame() {
+        if (confirm('初期状態に戻しますか？')) {
+            inPlayers = Array(INITIAL_IN).fill(true);
+            render();
+        }
+    }
+
+    // 初回表示
+    render();
 </script>
 
 </body>
