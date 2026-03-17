@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人数移動シミュレーター</title>
+    <style>
+        /* CSS: 見た目の調整 */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+        }
+        .label {
+            font-size: 0.9rem;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .count {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+        }
+        button:hover { background-color: #0056b3; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .log {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #d9534f;
+            min-height: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="margin-top: 0;">人数移動ゲーム</h2>
+    <div class="stats">
+        <div>
+            <span class="label">外（攻撃側）</span>
+            <span id="outerCount" class="count">9</span>
+        </div>
+        <div>
+            <span class="label">中（守備側）</span>
+            <span id="innerCount" class="count">17</span>
+        </div>
+    </div>
+    
+    <button id="hitBtn">外が中を当てた！</button>
+    
+    <div id="message" class="log"></div>
+    <button id="resetBtn" style="margin-top: 10px; background-color: #6c757d; font-size: 0.8rem; padding: 5px;">リセット</button>
+</div>
+
+<script>
+    /* JavaScript: ロジックの実装 */
+    let outer = 9;
+    let inner = 17;
+
+    const outerElem = document.getElementById('outerCount');
+    const innerElem = document.getElementById('innerCount');
+    const hitBtn = document.getElementById('hitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const message = document.getElementById('message');
+
+    // 「当てた」ボタンの処理
+    hitBtn.addEventListener('click', () => {
+        if (inner > 0) {
+            inner--; // 中が減る
+            outer++; // 外が増える
+            updateDisplay();
+            
+            if (inner === 0) {
+                hitBtn.disabled = true;
+                message.textContent = "中が全滅しました！";
+            }
+        }
+    });
+
+    // 「リセット」ボタンの処理
+    resetBtn.addEventListener('click', () => {
+        outer = 9;
+        inner = 17;
+        hitBtn.disabled = false;
+        message.textContent = "";
+        updateDisplay();
+    });
+
+    // 画面表示の更新
+    function updateDisplay() {
+        outerElem.textContent = outer;
+        innerElem.textContent = inner;
+    }
+</script>
+
+</body>
+</html>
